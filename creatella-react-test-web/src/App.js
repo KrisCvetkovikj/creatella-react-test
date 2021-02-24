@@ -6,33 +6,23 @@ import Row from 'react-bootstrap/Row';
 import { SORT_TYPE } from './constants/sort-type';
 import ProductItemService from './services/product.service';
 import Form from 'react-bootstrap/Form';
-import Spinner from './components/spinner/Spinner';
+import Alert from 'react-bootstrap/Alert';
+import Loader from './components/spinner/Loader';
 
 class App extends React.Component {
 
   constructor(props) {
     super(props);
 
-    this.state = {
-      products: [],
-      page: 0,
-      sort: SORT_TYPE.ID,
-      // loading: true
-    }
+    this.setDefaultState(SORT_TYPE.ID);
   }
 
   componentDidMount() {
-    this.getProducts(0, SORT_TYPE.ID);
-
-    var options = {
-      root: null,
-      rootMargin: "0px",
-      threshold: 1.0
-    };
+    this.getProducts(1, SORT_TYPE.ID);
 
     this.observer = new IntersectionObserver(
       this.handleObserver.bind(this),
-      options
+      this.state.options
     );
     this.observer.observe(this.loadingRef);
   }
@@ -47,12 +37,34 @@ class App extends React.Component {
     this.setState({ prevY: y });
   }
 
-  getProducts(currentPage, option) {
+  setDefaultState(sort) {
+    this.state = {
+      products: [],
+      page: 1,
+      prevY: 0,
+      sort: sort,
+      allProductsLoaded: false,
+      options: {
+        root: null,
+        rootMargin: "0px",
+        threshold: 1.0
+      }
+    }
+  }
+
+  getProducts(currentPage, option, onlyLoad) {
     const value = (option && option.target) ? option.target.value : this.state.sort;
-    this.setState({ page: currentPage, sort: value, loading: true });
+    this.setState({ page: currentPage || this.state.page, sort: value, loading: true });
 
     ProductItemService.getAll(currentPage, value).then(response => {
-      this.setState({ products: [...this.state.products, ...response.data] })
+      if (onlyLoad) {
+        this.setDefaultState(value);
+      }
+
+      this.setState({
+        products: [...this.state.products, ...response.data],
+        allProductsLoaded: response.data.length < 20
+      })
     });
   }
 
@@ -65,7 +77,7 @@ class App extends React.Component {
             <Form>
               <Form.Group controlId="exampleForm.ControlSelect1">
                 <Form.Label>Sort</Form.Label>
-                <Form.Control as="select" onChange={(value) => this.getProducts(value)}>
+                <Form.Control as="select" onChange={(value) => this.getProducts(undefined, value, true)}>
                   <option value="">Please select</option>
                   {
                     Object.values(SORT_TYPE).map(option => {
@@ -77,10 +89,13 @@ class App extends React.Component {
             </Form>
 
             <ProductList products={this.state.products}/>
-            <div ref={loadingRef => (this.loadingRef = loadingRef)}>
-            <Spinner/>
-            </div>
-            {/*{this.state.loading ? <Spinner/> : }*/}
+            {!this.state.allProductsLoaded && <div ref={loadingRef => (this.loadingRef = loadingRef)}>
+              <Loader/>
+            </div>}
+            {this.state.allProductsLoaded &&
+            <Alert variant={'info'}>
+              End of catalogue...
+            </Alert>}
           </Row>
         </Container>
       </div>

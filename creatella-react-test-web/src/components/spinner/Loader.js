@@ -1,8 +1,9 @@
 import { Component } from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
+import Spinner from 'react-bootstrap/Spinner';
 
-class Spinner extends Component {
+class Loader extends Component {
 
   render() {
     return (
@@ -10,9 +11,9 @@ class Spinner extends Component {
         <Container>
           <Row/>
           <Row>
-            <div className="spinner-border" role="status">
+            <Spinner animation="border" role="status">
               <span className="sr-only">Loading...</span>
-            </div>
+            </Spinner>
           </Row>
           <Row/>
         </Container>
@@ -21,4 +22,4 @@ class Spinner extends Component {
   }
 }
 
-export default Spinner;
+export default Loader;
