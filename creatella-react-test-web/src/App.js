@@ -1,65 +1,64 @@
 import './App.css';
 import ProductList from './components/product-list/ProductList';
-import React, { useEffect, useState } from 'react';
-import Nav from 'react-bootstrap/Nav';
+import React from 'react';
 import Container from 'react-bootstrap/Container';
-import Dropdown from 'react-bootstrap/Dropdown';
-import SplitButton from 'react-bootstrap/SplitButton';
-import ProductDataService from './services/product.service';
+import Row from 'react-bootstrap/Row';
+import { SORT_TYPE } from './constants/sort-type';
+import ProductItemService from './services/product.service';
+import Form from 'react-bootstrap/Form';
+import { MDBSpinner } from 'mdbreact';
+import Spinner from './components/spinner/Spinner';
 
-const App = () => {
+class App extends React.Component {
 
-  const [products, setProducts] = useState([]);
+  constructor(props) {
+    super(props);
 
-  let sortBySize = () => {
-    let sortedProducts = [...products].sort((p1, p2) => {
-      return p1.size - p2.size;
-    });
-    console.log("sorted by size")
-    setProducts(sortedProducts);
-  };
-  let sortByPrice = () => {
-    let sortedProducts = [...products].sort((p1, p2) => {
-      return p1.price - p2.price;
-    });
-    console.log("sorted by price")
-    setProducts(sortedProducts);
-  };
-  let sortById = () => {
-    let sortedProducts = [...products].sort((p1, p2) => {
-      return p1.id - p2.id;
-    });
-    console.log("sorted by id")
-    setProducts(sortedProducts);
-  };
-
-
-  useEffect(() => {
-    async function fetchProducts() {
-      return await ProductDataService.getAll();
+    this.state = {
+      products: [],
+      page: 0,
+      sort: SORT_TYPE.ID,
+      loading: true
     }
+  }
 
-    fetchProducts().then(response => setProducts(response.data));
-  }, [setProducts]);
+  componentDidMount() {
+    this.getProducts(SORT_TYPE.ID);
+  }
 
-  return (
-    <div>
-      <Nav>
-        <Nav.Item>
-          <Dropdown>
-            <SplitButton id="dropdown-basic-button" title="Sort">
-              <Dropdown.Item onClick={sortBySize}>Size</Dropdown.Item>
-              <Dropdown.Item onClick={sortByPrice}>Price</Dropdown.Item>
-              <Dropdown.Item onClick={sortById}>Id</Dropdown.Item>
-            </SplitButton>
-          </Dropdown>
-        </Nav.Item>
-      </Nav>
-      <Container>
-        <ProductList products={products}/>
-      </Container>
-    </div>
-  )
+  getProducts(option) {
+    const value = option.target ? option.target.value : SORT_TYPE.id;
+    this.setState({ sort: value, loading: true });
+    const { page } = this.state;
+    ProductItemService.getAll(page, value).then(response => this.setState({ products: response.data, loading: false }));
+  }
+
+  render() {
+
+    return (
+      <div>
+        <Container>
+          <Row>
+            <Form>
+              <Form.Group controlId="exampleForm.ControlSelect1">
+                <Form.Label>Sort</Form.Label>
+                <Form.Control as="select" onChange={(value) => this.getProducts(value)}>
+                  <option value="">Please select</option>
+                  {
+                    Object.values(SORT_TYPE).map(option => {
+                      return <option key={option} value={option}>{option}</option>
+                    })
+                  }
+                </Form.Control>
+              </Form.Group>
+            </Form>
+            {this.state.loading ? <Spinner/> : <ProductList products={this.state.products}/>}
+          </Row>
+        </Container>
+      </div>
+    );
+  }
+
 }
 
 export default App;
