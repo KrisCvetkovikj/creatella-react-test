@@ -6,7 +6,6 @@ import Row from 'react-bootstrap/Row';
 import { SORT_TYPE } from './constants/sort-type';
 import ProductItemService from './services/product.service';
 import Form from 'react-bootstrap/Form';
-import { MDBSpinner } from 'mdbreact';
 import Spinner from './components/spinner/Spinner';
 
 class App extends React.Component {
@@ -18,19 +17,43 @@ class App extends React.Component {
       products: [],
       page: 0,
       sort: SORT_TYPE.ID,
-      loading: true
+      // loading: true
     }
   }
 
   componentDidMount() {
-    this.getProducts(SORT_TYPE.ID);
+    this.getProducts(0, SORT_TYPE.ID);
+
+    var options = {
+      root: null,
+      rootMargin: "0px",
+      threshold: 1.0
+    };
+
+    this.observer = new IntersectionObserver(
+      this.handleObserver.bind(this),
+      options
+    );
+    this.observer.observe(this.loadingRef);
   }
 
-  getProducts(option) {
-    const value = option.target ? option.target.value : SORT_TYPE.id;
-    this.setState({ sort: value, loading: true });
-    const { page } = this.state;
-    ProductItemService.getAll(page, value).then(response => this.setState({ products: response.data, loading: false }));
+  handleObserver(entities, observer) {
+    const y = entities[0].boundingClientRect.y;
+    if (this.state.prevY > y) {
+      const curPage = this.state.page + 1;
+      this.getProducts(curPage);
+      this.setState({ page: curPage });
+    }
+    this.setState({ prevY: y });
+  }
+
+  getProducts(currentPage, option) {
+    const value = (option && option.target) ? option.target.value : this.state.sort;
+    this.setState({ page: currentPage, sort: value, loading: true });
+
+    ProductItemService.getAll(currentPage, value).then(response => {
+      this.setState({ products: [...this.state.products, ...response.data] })
+    });
   }
 
   render() {
@@ -52,7 +75,12 @@ class App extends React.Component {
                 </Form.Control>
               </Form.Group>
             </Form>
-            {this.state.loading ? <Spinner/> : <ProductList products={this.state.products}/>}
+
+            <ProductList products={this.state.products}/>
+            <div ref={loadingRef => (this.loadingRef = loadingRef)}>
+            <Spinner/>
+            </div>
+            {/*{this.state.loading ? <Spinner/> : }*/}
           </Row>
         </Container>
       </div>
