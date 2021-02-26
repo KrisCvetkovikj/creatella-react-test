@@ -20,6 +20,7 @@ class App extends React.Component {
   componentDidMount() {
     this.getProducts(1, SORT_TYPE.ID);
 
+    // Scroll observer
     this.observer = new IntersectionObserver(
       this.handleObserver.bind(this),
       this.state.options
@@ -52,21 +53,32 @@ class App extends React.Component {
     }
   }
 
+  /**
+   * Fetch products.
+   * Push an advertisement "product" every 20.
+   * @param currentPage
+   * @param option
+   * @param onlyLoad
+   */
   getProducts(currentPage, option, onlyLoad) {
     const value = (option && option.target) ? option.target.value : this.state.sort;
     this.setState({ page: currentPage || this.state.page, sort: value, loading: true });
 
     ProductItemService.getAll(currentPage, value).then(response => {
       if (onlyLoad) {
+        // reset on sort change
         this.setDefaultState(value);
       }
 
       this.setState({
+        // push on top of stack new products
         products: [...this.state.products, ...response.data],
+        // if no more products, assign
         allProductsLoaded: response.data.length < 20
       });
 
       if (!this.state.allProductsLoaded) {
+        // fake product i.e. advertisement
         this.setState({
           products: [...this.state.products, {
             isAd:true
