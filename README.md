@@ -1,3 +1,7 @@
+### React Web
+
+To start the front-end, run `yarn start` alongside the json server provided.
+
 Products Grid
 ====
 
