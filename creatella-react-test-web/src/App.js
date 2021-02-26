@@ -64,7 +64,15 @@ class App extends React.Component {
       this.setState({
         products: [...this.state.products, ...response.data],
         allProductsLoaded: response.data.length < 20
-      })
+      });
+
+      if (!this.state.allProductsLoaded) {
+        this.setState({
+          products: [...this.state.products, {
+            isAd:true
+          }]
+        })
+      }
     });
   }
 
@@ -88,7 +96,7 @@ class App extends React.Component {
               </Form.Group>
             </Form>
 
-            <ProductList products={this.state.products}/>
+            <ProductList products={this.state.products} />
             {!this.state.allProductsLoaded && <div ref={loadingRef => (this.loadingRef = loadingRef)}>
               <Loader/>
             </div>}
@@ -101,7 +109,6 @@ class App extends React.Component {
       </div>
     );
   }
-
 }
 
 export default App;
